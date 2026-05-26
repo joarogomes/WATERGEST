@@ -1,0 +1,6 @@
+{
+  "name": "WATERGEST",
+  "description": "Sistema de gestão comercial e de faturamento homologado pela AGT com integração SAF-T AO e sensores de qualidade de água mineral.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

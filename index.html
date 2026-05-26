@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WATERGEST — Gestão AGT & Facturação Homologada</title>
+    <!-- Google Fonts for elevated, modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External library dependencies used by app.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Link to the beautiful application stylesheet -->
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- 1. LOGIN OVERLAY -->
+    <div id="loginOverlay" class="login-overlay" hidden>
+        <div class="login-card">
+            <div class="login-logo-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+                <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="width: 72px; height: 72px; filter: drop-shadow(0 12px 24px rgba(26, 168, 216, 0.35));">
+                  <defs>
+                    <linearGradient id="loginDropGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#41d2f3" />
+                      <stop offset="50%" stop-color="#1aa8d8" />
+                      <stop offset="100%" stop-color="#0d2341" />
+                    </linearGradient>
+                    <linearGradient id="loginHighlightGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+                    </linearGradient>
+                    <radialGradient id="loginInnerGlow1" cx="50%" cy="60%" r="50%">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="60" cy="65" r="42" fill="none" stroke="#41d2f3" stroke-width="1.5" stroke-opacity="0.15" />
+                  <g transform="translate(10, 5)">
+                    <path d="M 50 5 Q 85 45 85 68 A 35 35 0 1 1 15 68 Q 15 45 50 5 Z" fill="url(#loginDropGrad1)" />
+                    <path d="M 50 5 Q 85 45 85 68 A 35 35 0 0 1 50 103 Z" fill="#0c1d35" fill-opacity="0.22" />
+                    <path d="M 50 12 Q 80 48 80 68 A 30 30 0 1 1 20 68 Q 20 48 50 12 Z" fill="url(#loginInnerGlow1)" />
+                    <path d="M 50 5 Q 68 38 68 55 A 18 18 0 0 1 50 73 Z" fill="#41d2f3" fill-opacity="0.4" />
+                    <path d="M 50 5 Q 32 38 32 55 A 18 18 0 0 0 50 73 Z" fill="#ffffff" fill-opacity="0.15" />
+                    <path d="M 32 30 C 24 45 23 58 28 68 C 21 60 20 45 30 30 Z" fill="url(#loginHighlightGrad1)" />
+                    <path d="M 50 15 L 53 23 L 61 26 L 53 29 L 50 37 L 47 29 L 39 26 L 47 23 Z" fill="#ffffff" fill-opacity="0.9" />
+                  </g>
+                </svg>
+            </div>
+            <h2>ENTRAR</h2>
+            <p class="login-subtitle">Aceda ao sistema WATERGEST</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginPassword">PIN de Acesso:</label>
+                    <input type="password" id="loginPassword" placeholder="Insira o seu PIN" required autocomplete="current-password" pattern="\d*" inputmode="numeric" />
+                </div>
+                <button type="submit" class="primary-button">ENTRAR</button>
+                <p id="loginError" class="login-error" hidden>PIN de acesso inválido!</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. FIRST STORE SETUP OVERLAY -->
+    <div id="firstStoreOverlay" class="login-overlay" hidden>
+        <div class="login-card">
+            <div class="login-logo-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+                <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="width: 72px; height: 72px; filter: drop-shadow(0 12px 24px rgba(26, 168, 216, 0.35));">
+                  <defs>
+                    <linearGradient id="loginDropGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#41d2f3" />
+                      <stop offset="50%" stop-color="#1aa8d8" />
+                      <stop offset="100%" stop-color="#0d2341" />
+                    </linearGradient>
+                    <linearGradient id="loginHighlightGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+                    </linearGradient>
+                    <radialGradient id="loginInnerGlow2" cx="50%" cy="60%" r="50%">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="60" cy="65" r="42" fill="none" stroke="#41d2f3" stroke-width="1.5" stroke-opacity="0.15" />
+                  <g transform="translate(10, 5)">
+                    <path d="M 50 5 Q 85 45 85 68 A 35 35 0 1 1 15 68 Q 15 45 50 5 Z" fill="url(#loginDropGrad2)" />
+                    <path d="M 50 5 Q 85 45 85 68 A 35 35 0 0 1 50 103 Z" fill="#0c1d35" fill-opacity="0.22" />
+                    <path d="M 50 12 Q 80 48 80 68 A 30 30 0 1 1 20 68 Q 20 48 50 12 Z" fill="url(#loginInnerGlow2)" />
+                    <path d="M 50 5 Q 68 38 68 55 A 18 18 0 0 1 50 73 Z" fill="#41d2f3" fill-opacity="0.4" />
+                    <path d="M 50 5 Q 32 38 32 55 A 18 18 0 0 0 50 73 Z" fill="#ffffff" fill-opacity="0.15" />
+                    <path d="M 32 30 C 24 45 23 58 28 68 C 21 60 20 45 30 30 Z" fill="url(#loginHighlightGrad2)" />
+                    <path d="M 50 15 L 53 23 L 61 26 L 53 29 L 50 37 L 47 29 L 39 26 L 47 23 Z" fill="#ffffff" fill-opacity="0.9" />
+                  </g>
+                </svg>
+            </div>
+            <h2>Configurações Iniciais</h2>
+            <p class="login-subtitle">Crie a sua primeira loja para começar</p>
+            <form id="firstStoreForm">
+                <div class="form-group">
+                    <label for="firstStoreName">Nome da Loja:</label>
+                    <input type="text" id="firstStoreName" name="name" placeholder="Ex: Sede WATERGEST" required />
+                </div>
+                <div class="form-group">
+                    <label for="firstStoreWhatsapp">WhatsApp para Relatórios (com prefixo):</label>
+                    <input type="text" id="firstStoreWhatsapp" name="whatsapp" value="+244" placeholder="Ex: +244920000000" />
+                </div>
+                <button type="submit" class="primary-button">Iniciar Sistema</button>
+                <button type="button" id="firstStoreLogout" class="ghost-button" style="margin-top: 8px; width: 100%;">Sair</button>
+                <p id="firstStoreError" class="login-error" hidden></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. TOP-LEVEL APP SHELL -->
+    <div id="appShell" class="app-shell">
+        <!-- Header Section -->
+        <header class="app-header">
+            <div class="header-row header-row-top">
+                <div class="header-brand">
+                    <span class="brand-logo">
+                        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; display: block;">
+                          <defs>
+                            <linearGradient id="headerDropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stop-color="#41d2f3" />
+                              <stop offset="50%" stop-color="#1aa8d8" />
+                              <stop offset="100%" stop-color="#0d2341" />
+                            </linearGradient>
+                            <linearGradient id="headerHighlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+                            </linearGradient>
+                            <radialGradient id="headerInnerGlow" cx="50%" cy="60%" r="50%">
+                              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                              <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                            </radialGradient>
+                          </defs>
+                          <circle cx="60" cy="65" r="42" fill="none" stroke="#41d2f3" stroke-width="1.5" stroke-opacity="0.15" />
+                          <g transform="translate(10, 5)">
+                            <path d="M 50 5 Q 85 45 85 68 A 35 35 0 1 1 15 68 Q 15 45 50 5 Z" fill="url(#headerDropGrad)" />
+                            <path d="M 50 5 Q 85 45 85 68 A 35 35 0 0 1 50 103 Z" fill="#0c1d35" fill-opacity="0.22" />
+                            <path d="M 50 12 Q 80 48 80 68 A 30 30 0 1 1 20 68 Q 20 48 50 12 Z" fill="url(#headerInnerGlow)" />
+                            <path d="M 50 5 Q 68 38 68 55 A 18 18 0 0 1 50 73 Z" fill="#41d2f3" fill-opacity="0.4" />
+                            <path d="M 50 5 Q 32 38 32 55 A 18 18 0 0 0 50 73 Z" fill="#ffffff" fill-opacity="0.15" />
+                            <path d="M 32 30 C 24 45 23 58 28 68 C 21 60 20 45 30 30 Z" fill="url(#headerHighlightGrad)" />
+                            <path d="M 50 15 L 53 23 L 61 26 L 53 29 L 50 37 L 47 29 L 39 26 L 47 23 Z" fill="#ffffff" fill-opacity="0.9" />
+                          </g>
+                        </svg>
+                    </span>
+                    <div class="brand-support">
+                        <h1 class="brand-name">WATERGEST</h1>
+                        <p class="eyebrow">Gestão Integrada & AGT</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <!-- Store Switcher -->
+                    <div class="store-switcher">
+                        <span class="store-switcher-label">Loja Activa:</span>
+                        <select id="storeSwitcher">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                    <!-- Cloud Sync Status -->
+                    <div id="syncStatus" class="status-pill warning">
+                        <span id="supabaseStatusText">Modo local. Configure o Supabase para sincronizar.</span>
+                    </div>
+                    <!-- Operator Account -->
+                    <div class="header-account">
+                        <span class="header-account-label">Painel:</span>
+                        <strong id="sessionRoleLabel">-</strong>
+                        <button id="logoutButton" class="ghost-button">Sair</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu Toggle Button -->
+            <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-expanded="false" style="display: none;">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div id="mobileOverlay" class="mobile-overlay"></div>
+            
+            <!-- Responsive Navigation Tabs -->
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-view="dashboard">Painel</button>
+                <button class="nav-tab" data-view="vendas">Vendas</button>
+                <button class="nav-tab" data-view="clientes">Clientes</button>
+                <button class="nav-tab" data-view="produtos">Produtos</button>
+                <button class="nav-tab" data-view="stock">Stock</button>
+                <button class="nav-tab text-ink" data-view="financas">Finanças</button>
+                <button class="nav-tab" data-view="qualidade">Qualidade</button>
+                <button class="nav-tab" data-view="manutencao">Manutenção</button>
+                <button class="nav-tab role-admin-only" data-view="faturas">Facturas</button>
+                <button class="nav-tab" data-view="relatorios">Relatórios</button>
+                <button class="nav-tab" data-view="campanhas">Campanhas</button>
+                <button class="nav-tab" data-view="configuracoes">Configurações</button>
+            </nav>
+        </header>
+        
+        <!-- Main Scrollable Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <h2 id="viewTitle">Painel</h2>
+            </div>
+            
+            <!-- VIEW: PAINEL / DASHBOARD -->
+            <div class="view active" id="dashboard">
+                <!-- Timeline/Period Navigation -->
+                <div class="dashboard-controls flex justify-between items-center gap-4 mb-4 flex-wrap">
+                    <div id="periodSwitch" class="period-switch flex gap-2">
+                        <button class="period-button active" data-period="daily">Diário</button>
+                        <button class="period-button" data-period="weekly">Semanal</button>
+                        <button class="period-button" data-period="monthly">Mensal</button>
+                        <button class="period-button" data-period="yearly">Anual</button>
+                    </div>
+                    <div class="period-navigation flex items-center gap-2">
+                        <button id="periodPrev" class="period-nav-button">◀</button>
+                        <span id="periodRangeLabel" class="font-mono text-sm font-semibold text-ink">Hoje</span>
+                        <input type="date" id="periodAnchor" class="period-anchor-input" style="display: none;" />
+                        <button id="periodNext" class="period-nav-button">▶</button>
+                        <button id="periodToday" class="period-nav-button">Hoje</button>
+                    </div>
+                </div>
+                
+                <!-- KPI metrics dynamic template -->
+                <div id="statsGrid" class="stats-grid">
+                    <!-- Dynamically populated cards representing sales, costs, expenses, profits -->
+                </div>
+                
+                <template id="metricTemplate">
+                    <div class="panel">
+                        <p class="card-label text-xs uppercase text-muted font-bold"></p>
+                        <h3 class="text-2xl font-extrabold text-ink mt-1"></h3>
+                        <span class="text-xs text-muted block mt-1"></span>
+                    </div>
+                </template>
+                
+                <!-- Main Dashboard Charts -->
+                <div class="dashboard-grid mt-6">
+                    <div class="panel col-span-2">
+                        <h3>Fluxo Operacional (Vendas, Despesas & Lucro)</h3>
+                        <div id="seriesToggles" class="flex gap-4 mb-4">
+                            <label class="flex items-center gap-2 text-xs cursor-pointer">
+                                <input type="checkbox" data-series="sales" checked /> Vendas
+                            </label>
+                            <label class="flex items-center gap-2 text-xs cursor-pointer">
+                                <input type="checkbox" data-series="expenses" checked /> Despesas
+                            </label>
+                            <label class="flex items-center gap-2 text-xs cursor-pointer">
+                                <input type="checkbox" data-series="profit" checked /> Lucro Estimado
+                            </label>
+                        </div>
+                        <div class="interactive-chart-shell">
+                            <svg id="salesChartSvg" viewBox="0 0 800 300" class="w-full"></svg>
+                            <div id="salesChartTooltip" class="chart-tooltip" hidden></div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h3>Vendas por Produto</h3>
+                        <div id="productPieChart" class="pie-chart-container"></div>
+                        <div id="productPieLegend" class="pie-legend mt-4"></div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Breakdown Panels -->
+                <div class="dashboard-grid mt-6 animate-fade-in">
+                    <div class="panel">
+                        <h3>Saldos Correspondentes de Clientes</h3>
+                        <div id="clientBalances" class="list-wrapper"></div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h3>Métodos de Liquidação Utilizados</h3>
+                        <div id="paymentBreakdown" class="breakdown-wrapper"></div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h3>Qualidade da Água & Pureza</h3>
+                        <div id="waterSummary" class="list-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: VENDAS & OPERAÇÕES -->
+            <div class="view" id="vendas">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Nova Operação Monetária</h3>
+                        <form id="saleForm">
+                            <div class="form-group mb-3">
+                                <label for="saleEntryType">Tipo de Operação:</label>
+                                <select id="saleEntryType" name="entryType" class="form-control" style="width: 100%;">
+                                    <option value="sale">Venda Directa</option>
+                                    <option value="debt">Venda a Crédito (Dívida)</option>
+                                    <option value="deposit">Depósito de Saldo</option>
+                                    <option value="settlement">Liquidação de Dívida</option>
+                                    <option value="withdrawal">Levantamento/Devolução</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="saleClient">Especifique o Cliente:</label>
+                                <select id="saleClient" name="clientId" class="form-control" style="width: 100%;">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="saleNif">NIF Correspondente:</label>
+                                <input type="text" id="saleNif" class="form-control" readonly style="background: var(--bg); opacity: 0.8;" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="saleProduct">Produto ou Serviço Técnico:</label>
+                                <select id="saleProduct" name="productId" class="form-control" style="width: 100%;">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="saleQuantity">Quantidade Absoluta:</label>
+                                <input type="number" id="saleQuantity" name="quantity" class="form-control" value="1" min="1" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="salePaymentMethod">Método de Liquidação:</label>
+                                <select id="salePaymentMethod" name="paymentMethod" class="form-control" style="width: 100%;">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Multicaixa TPA">Multicaixa TPA</option>
+                                    <option value="Express">Express</option>
+                                    <option value="Saldo do cliente">Utilizar Saldo Acumulado</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="saleDate">Data Operacional:</label>
+                                <input type="date" id="saleDate" name="date" class="form-control" required />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Confirmar Lançamento</button>
+                        </form>
+                        
+                        <!-- Mini Preview of Invoice Receipt -->
+                        <div class="panel mt-4 border border-accent/20" style="background: white;">
+                            <h4 class="text-xs uppercase mb-2 font-bold text-accent">Visualização de Recibo/Talão</h4>
+                            <div id="salePreview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <h3>Histórico Abrangente de Transacções</h3>
+                        <!-- Table Filters -->
+                        <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label for="filterClient">Filtro de Cliente:</label>
+                                <select id="filterClient" class="form-control" style="width: 100%;"></select>
+                            </div>
+                            <div>
+                                <label for="filterProduct">Filtro de Produto:</label>
+                                <select id="filterProduct" class="form-control" style="width: 100%;"></select>
+                            </div>
+                            <div>
+                                <label for="filterPayment">Filtro de Método:</label>
+                                <select id="filterPayment" class="form-control" style="width: 100%;">
+                                    <option value="">Todos os Métodos</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Multicaixa TPA">Multicaixa TPA</option>
+                                    <option value="Express">Express</option>
+                                    <option value="Saldo do cliente">Usar Saldo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filterDate">Filtro de Data:</label>
+                                <input type="date" id="filterDate" class="form-control" />
+                            </div>
+                        </div>
+                        
+                        <!-- Transactions Log Table -->
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Tipo</th>
+                                        <th>Cliente</th>
+                                        <th>Item/Operação</th>
+                                        <th>Quant.</th>
+                                        <th>Bruto (AKZ)</th>
+                                        <th>Líquido (AKZ)</th>
+                                        <th>Acções</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesTable">
+                                    <!-- Dynamic rows loaded by module -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="clientPurchaseSummary" class="mt-6"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: CLIENTES -->
+            <div class="view" id="clientes">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Cadastrar Cliente para Conta Corrente</h3>
+                        <form id="clientForm">
+                            <div class="form-group mb-3">
+                                <label for="clientName">Nome do Cliente:</label>
+                                <input type="text" id="clientName" name="name" class="form-control" placeholder="Ex: Lucas de Sousa" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="clientPhone">Número de Contacto:</label>
+                                <input type="tel" id="clientPhone" name="phone" class="form-control" placeholder="Ex: 934000000" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="clientNifInput">Número de Contribuinte NIF:</label>
+                                <input type="text" id="clientNifInput" name="nif" class="form-control" value="999999999" placeholder="Ex: 500124976" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="clientAddress">Endereço de Entrega/Faturação:</label>
+                                <input type="text" id="clientAddress" name="address" class="form-control" placeholder="Bairro, Rua" />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Gravar Conta de Cliente</button>
+                        </form>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <h3>Fichas Digitais de Contas Correntes</h3>
+                        <div id="clientsList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                            <!-- Populated dynamically with entities cards -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: PRODUTOS -->
+            <div class="view" id="produtos">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Catalogar Produto/Serviço</h3>
+                        <form id="productForm">
+                            <div class="form-group mb-3">
+                                <label for="productName">Descrição Comercial:</label>
+                                <input type="text" id="productName" name="name" class="form-control" placeholder="Ex: Garrafão 20L Limpo" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productPrice">Preço de Venda Praticado (AKZ):</label>
+                                <input type="number" id="productPrice" name="price" class="form-control" placeholder="Valor de venda" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productCost">Custo de Fabrico Estimado (AKZ):</label>
+                                <input type="number" id="productCost" name="unitCost" class="form-control" placeholder="Valor de custo" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productUnit">Unidade de Embalamento:</label>
+                                <input type="text" id="productUnit" name="unit" class="form-control" value="un" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productCategory">Categoria Comercial:</label>
+                                <select id="productCategory" name="category" class="form-control">
+                                    <option value="Agua">Água Pura/Mineral</option>
+                                    <option value="Embalagem">Garrafas/Embalagens</option>
+                                    <option value="Servico">Serviços e Distribuição</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productVatRate">Taxa Tributária Real IVA (%):</label>
+                                <select id="productVatRate" name="vatRate" class="form-control">
+                                    <option value="">Isento (0%)</option>
+                                    <option value="2">Simplificado (2%)</option>
+                                    <option value="5">Intermediário (5%)</option>
+                                    <option value="14">Geral (14%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productStockControlled">Controlar Inventário Físico?</label>
+                                <select id="productStockControlled" name="stockControlled" class="form-control">
+                                    <option value="true">Activar Controlo de Unidades</option>
+                                    <option value="false">Não aplicar controlo</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="productInitialStock">Inventário Inicial Directo:</label>
+                                <input type="number" id="productInitialStock" name="initialStock" class="form-control" value="0" />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Gravar no Catálogo</button>
+                        </form>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <h3>Artigos do Catálogo Cadastrados</h3>
+                        <div id="stockList" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: STOCK -->
+            <div class="view" id="stock">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Registrar Entrada de Lote Produzido</h3>
+                        <form id="stockForm">
+                            <div class="form-group mb-3">
+                                <label for="stockProduct">Selecione o Artigo:</label>
+                                <select id="stockProduct" name="productId" class="form-control" style="width: 100%;">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="stockQty">Quantidade Produzida:</label>
+                                <input type="number" id="stockQty" name="quantity" class="form-control" placeholder="Entrada de unidades" min="1" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="stockCost">Custo Unitário Real de Produção (AKZ):</label>
+                                <input type="number" id="stockCost" name="unitCost" class="form-control" placeholder="Custo por un" required />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Adicionar Unidades ao Stock</button>
+                        </form>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <h3>Histórico de Inventário de Produtos</h3>
+                        <div id="stockMovementsBox" class="text-xs text-muted">
+                            As alterações no inventário e entradas por lote são sincronizadas no painel de vendas e stock.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: FINANÇAS -->
+            <div class="view" id="financas">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Registrar Tipo de Saída (Movimento de Caixa)</h3>
+                        <form id="financeForm">
+                            <div class="form-group mb-3">
+                                <label for="financeType">Classificação da Saída:</label>
+                                <select id="financeType" name="type" class="form-control">
+                                    <option value="expense">Despesa Operacional</option>
+                                    <option value="investment">Investimento de Capital</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="financeCategory">Categoria / Classificação:</label>
+                                <input type="text" id="financeCategory" name="category" class="form-control" placeholder="Ex: Energia, Filtros, Combustível" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="financeAmount">Valor do Movimento (AKZ):</label>
+                                <input type="number" id="financeAmount" name="amount" class="form-control" placeholder="AKZ" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="financeDate">Data de Pagamento:</label>
+                                <input type="date" id="financeDate" name="date" class="form-control" required />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Registrar Movimento</button>
+                        </form>
+                        
+                        <!-- Quick expense box -->
+                        <div class="panel mt-4 border border-accent/20">
+                            <h4>Despesa Rápida (Hoje):</h4>
+                            <form id="quickExpenseForm">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="text" name="category" placeholder="Ex: Energia" class="form-control text-xs" required />
+                                    <input type="number" name="amount" placeholder="AKZ" class="form-control text-xs" required />
+                                </div>
+                                <button type="submit" class="primary-button text-xs w-full mt-2">Registrar Despesa</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <!-- Navigation Period for Finances -->
+                        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                            <div id="financePeriodSwitch" class="period-switch flex gap-2">
+                                <button class="period-button active" data-period="daily">Diário</button>
+                                <button class="period-button" data-period="weekly">Semanal</button>
+                                <button class="period-button" data-period="monthly">Mensal</button>
+                                <button class="period-button" data-period="yearly">Anual</button>
+                            </div>
+                            <div class="flex items-center gap-1 text-xs">
+                                <button id="financePeriodPrev" class="period-nav-button">◀</button>
+                                <span id="financeRangeLabel" class="font-mono font-bold text-ink">Hoje</span>
+                                <input type="date" id="financeAnchor" style="display: none;" />
+                                <button id="financePeriodNext" class="period-nav-button">▶</button>
+                                <button id="financePeriodToday" class="period-nav-button">Hoje</button>
+                            </div>
+                        </div>
+                        
+                        <div id="financeSummaryCards" class="grid grid-cols-2 gap-4 mb-4">
+                            <!-- Summaries bound dynamically by code -->
+                        </div>
+                        
+                        <div class="interactive-chart-shell mb-4">
+                            <svg id="financeChartSvg" viewBox="0 0 800 200" class="w-full"></svg>
+                            <div id="financeChartTooltip" class="chart-tooltip" hidden></div>
+                        </div>
+                        
+                        <h3>Lista de Pagamentos & Despesas Registradas</h3>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data Lançamento</th>
+                                        <th>Tipo de Saída</th>
+                                        <th>Categoria</th>
+                                        <th>Valor de Caixa (AKZ)</th>
+                                        <th>Acções</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="financeList">
+                                    <!-- Dynamic elements -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: QUALIDADE DA ÁGUA -->
+            <div class="view" id="qualidade">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Análise Química Periodica</h3>
+                        <form id="waterForm">
+                            <div class="form-group mb-3">
+                                <label for="waterPh">Acidez da Água (pH):</label>
+                                <input type="number" step="0.1" id="waterPh" name="ph" class="form-control" value="7.2" min="0" max="14" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="waterTds">Pureza Mineral TDS (ppm):</label>
+                                <input type="number" id="waterTds" name="tds" class="form-control" value="45" min="0" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="waterTemp">Temperatura Registrada (°C):</label>
+                                <input type="number" step="0.5" id="waterTemp" name="temperature" class="form-control" value="24.5" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="waterDate">Data de Laboratório:</label>
+                                <input type="date" id="waterDate" name="date" class="form-control" required />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Gravar Ensaio</button>
+                        </form>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                            <h3 id="waterRangeLabel" class="m-0 text-sm font-semibold">Tendência Tecnológica</h3>
+                            <div id="waterMetricSwitch" class="period-switch flex gap-2">
+                                <button class="period-button active" data-period="ph">Ph da Água</button>
+                                <button class="period-button" data-period="tds">TDS (Sólidos)</button>
+                                <button class="period-button" data-period="temperature">Temperatura</button>
+                            </div>
+                        </div>
+                        
+                        <div id="waterKpis" class="grid grid-cols-4 gap-4 mb-4 font-mono">
+                            <!-- Populated dynamically -->
+                        </div>
+                        
+                        <div class="interactive-chart-shell mb-4">
+                            <svg id="waterChartSvg" viewBox="0 0 800 200" class="w-full"></svg>
+                            <div id="waterChartTooltip" class="chart-tooltip" hidden></div>
+                        </div>
+                        
+                        <h3>Histórico de Medições Preventivas</h3>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data Analisada</th>
+                                        <th>Hora do Ensaio</th>
+                                        <th>pH</th>
+                                        <th>Sólidos Dissolvidos (TDS)</th>
+                                        <th>Temperatura</th>
+                                        <th>Conformidade Química</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="waterHistory">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: MANUTENÇÃO -->
+            <div class="view" id="manutencao">
+                <div class="dashboard-row grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="panel">
+                        <h3>Lançamento Preventivo em Equipamento</h3>
+                        <form id="maintenanceForm">
+                            <div class="form-group mb-3">
+                                <label for="maintenanceTitle">Título da Operação:</label>
+                                <input type="text" id="maintenanceTitle" name="title" class="form-control" placeholder="Subsiltuição ou desinfecção" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="maintenanceCost">Custo Técnico Adicional (AKZ):</label>
+                                <input type="number" id="maintenanceCost" name="cost" class="form-control" placeholder="Valor total em AKZ" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="maintenanceNotes">Relatório de Ensaio Técnico:</label>
+                                <textarea id="maintenanceNotes" name="notes" class="form-control" rows="3" placeholder="Insira dados de filtros ou técnicos"></textarea>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="maintenanceDate">Data Técnico:</label>
+                                <input type="date" id="maintenanceDate" name="date" class="form-control" required />
+                            </div>
+                            <button type="submit" class="primary-button w-full">Confirmar Manutenção</button>
+                        </form>
+                    </div>
+                    
+                    <div class="panel col-span-2">
+                        <h3>Historial Técnico Sanitário Preventivo</h3>
+                        <div class="card-grid" id="maintenanceList">
+                            <!-- Populated dynamically with list -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: FACTURAS & CERTIFICADOS TRIBUTÁRIOS (AGT COMPLIANCE) -->
+            <div class="view" id="faturas">
+                <div class="panel">
+                    <div class="flex justify-between items-center flex-wrap gap-4 mb-4">
+                        <h3>Controle de Facturação Regulada (Regime de Validação de Software AGT)</h3>
+                        <div>
+                            <input type="text" id="invoiceSearch" class="form-control inline" placeholder="Procurar Facturas (Código, NIF ou Nome)..." style="width: 280px;" />
+                        </div>
+                    </div>
+                    
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cód. Factura (Série)</th>
+                                    <th>Data de Emissão</th>
+                                    <th>Estrutura Cliente / NIF</th>
+                                    <th>Bruto (AKZ)</th>
+                                    <th>Impostos Retidos (IVA)</th>
+                                    <th>Descontos</th>
+                                    <th>Valor Líquido (AKZ)</th>
+                                    <th>Certificado de Transmissão / Acção</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesLogTable">
+                                <!-- Loaded dynamically based on state sales -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: CAMPANHAS & MARKETING -->
+            <div class="view" id="campanhas">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="panel md:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3>Programas Promocionais Activos</h3>
+                            <button type="button" class="primary-button text-xs" onclick="openPromotionForm('')">+ Nova Campanha</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="promotionsGrid">
+                            <!-- Dynamically parsed promotions -->
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h3>Dicas Comerciais Operacionais</h3>
+                        <div id="marketingTipsContainer">
+                            <!-- Dynamically loaded marketing tips -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="panel">
+                        <h3>Pesquisa & Sustentabilidade Sanitária</h3>
+                        <div id="innovationTipsContainer">
+                            <!-- Populated by system tips in app.js -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEW: RELATÓRIOS & EXPORTAÇÕES -->
+            <div class="view" id="relatorios">
+                <div class="reports-toolbar flex gap-2 justify-end mb-4">
+                    <button type="button" id="refreshReportsTop" class="ghost-button text-xs">🔄 Atualizar Relatórios</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Column 1: Daily Report -->
+                    <div class="panel">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3>Relatório Técnico e Comercial Diário</h3>
+                            <span class="text-xs font-mono font-bold text-accent">Hoje</span>
+                        </div>
+                        <div id="dailyReport" class="report-card mb-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <button type="button" id="copyDailyReport" class="primary-button text-xs w-1/2">📋 Copiar Resumo</button>
+                            <button type="button" id="sendWhatsappReport" class="ghost-button text-xs w-1/2 font-bold">💬 Enviar via WhatsApp</button>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Monthly PDF Report -->
+                    <div class="panel">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3>Emissão de Relatório Mensal Certificado</h3>
+                            <span class="text-xs font-mono font-bold text-accent">PDF de Gestão</span>
+                        </div>
+                        <div id="monthlyReport" class="report-card mb-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="form-group mb-4">
+                            <label for="pdfYearMonth" class="text-xs text-muted block mb-1">Selecione o Mês do Relatório:</label>
+                            <input type="month" id="pdfYearMonth" class="form-control" value="2026-05" style="width: 100%;" />
+                        </div>
+                        <button type="button" id="monthlyReportButton" class="primary-button text-xs w-full">📥 Baixar PDF Mensal Certificado</button>
+                    </div>
+                </div>
+
+                <div class="panel mt-6">
+                    <h3>Ações de Sincronização e Auditoria</h3>
+                    <p class="text-xs text-muted mb-4">Force a atualização das métricas locais consolidadas. Ideal antes de fechar o turno comercial.</p>
+                    <button type="button" id="refreshReports" class="ghost-button text-xs">🔄 Recalcular Métricas e Atualizar Relatórios</button>
+                </div>
+            </div>
+            
+            <!-- VIEW: CONFIGURAÇÕES, BANCO CLOUD & UTILIZADORES -->
+            <div class="view" id="configuracoes">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Banco Supabase -->
+                    <div class="panel">
+                        <h3>Sincronização de Dados na Nuvem (PostgreSQL)</h3>
+                        <p class="text-xs text-muted mb-4">Ligue à base de dados para centralização filiais em rede e relatórios em tempo real.</p>
+                        <form id="supabaseForm">
+                            <div class="form-group mb-3">
+                                <label for="supUrl">URL Base de Ligação API:</label>
+                                <input type="url" id="supUrl" name="url" placeholder="https://xxx.supabase.co" class="form-control text-xs" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="supKey">Chave Segura AnonKey:</label>
+                                <input type="password" id="supKey" name="anonKey" placeholder="Token de Segurança JWT" class="form-control text-xs" />
+                            </div>
+                            <button type="submit" class="primary-button text-xs w-full">Testar & Gravar Conexão</button>
+                            <div class="flex gap-2 mt-2">
+                                <button type="button" id="pullSupabaseData" class="ghost-button text-xs w-1/2">Puxar Nuvem</button>
+                                <button type="button" id="pushSupabaseData" class="ghost-button text-xs w-1/2">Enviar Local</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Cadastro Fiscal AGT -->
+                    <div class="panel">
+                        <h3>Parâmetros de Certificação Fiscal Angolana (SAF-T AO)</h3>
+                        <p class="text-xs text-muted mb-4">Configure o regime tributável do imposto e os dados para validação fiscal legal das facturas.</p>
+                        <form id="fiscalConfigForm">
+                            <div class="form-group mb-3 flex items-center gap-2">
+                                <input type="checkbox" id="isFiscalActive" name="isFiscalActive" />
+                                <label for="isFiscalActive" class="text-xs font-semibold">Emitir facturas homologadas (Certificado de Assinatura)</label>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="fiscalNif">NIF Oficial do Operador:</label>
+                                <input type="text" id="fiscalNif" value="999999999" placeholder="Ex: 5410012479" class="form-control text-xs" required />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="taxRegistrationNumber">Conservatória / Repartição Fiscal Registo:</label>
+                                <input type="text" id="taxRegistrationNumber" placeholder="Nº Matricula Registrada" class="form-control text-xs" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="softwareValidationNumber">Nº de Homologação de Software AGT:</label>
+                                <input type="text" id="softwareValidationNumber" value="999/AGT/2026" class="form-control text-xs" readonly style="background: var(--bg); opacity: 0.8;" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="systemRegistrationId">Identificador do Código do Sistema:</label>
+                                <input type="text" id="systemRegistrationId" value="AC-AGT-2026" class="form-control text-xs" readonly style="background: var(--bg); opacity: 0.8;" />
+                            </div>
+                            <button type="submit" class="primary-button text-xs w-full">Gravar Definições Fiscais</button>
+                        </form>
+                        
+                        <!-- SAFT XML download block -->
+                        <div class="mt-4 pt-3 border-t border-accent/10">
+                            <h4>Exportação Fiscal SAF-T AO</h4>
+                            <button type="button" class="ghost-button text-xs w-full" onclick="downloadSaftAO()">📥 Baixar SAF-T XML Mensal</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filiais & Operadores -->
+                    <div class="panel">
+                        <h3>Gestão Operacional de Filiais & Utilizadores</h3>
+                        <div class="mb-4">
+                            <h4>Cadastrar Loja Filial:</h4>
+                            <form id="storeForm">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="text" name="name" placeholder="Ex: Filial Lubango" class="form-control text-xs" required />
+                                    <input type="text" name="whatsapp" placeholder="Ex: +2449..." class="form-control text-xs" />
+                                </div>
+                                <button type="submit" class="primary-button text-xs w-full mt-2">Criar Nova Filial</button>
+                            </form>
+                            <div id="storesList" class="compact-list text-xs mt-2 font-mono max-h-32 overflow-y-auto border border-accent/10 p-1 rounded"></div>
+                        </div>
+                        
+                        <hr class="border-accent/10 my-4" />
+                        
+                        <div>
+                            <h4>Registrar Novo Operador/Administrador:</h4>
+                            <form id="userForm">
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <input type="text" name="username" placeholder="Nome Operador" class="form-control text-xs" required />
+                                    <input type="password" name="password" placeholder="PIN Secreto" class="form-control text-xs" required />
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="userFormRole" class="text-[10px] uppercase">Nível Hierárquico:</label>
+                                    <select id="userFormRole" name="role" class="form-control text-xs">
+                                        <option value="operacao">Operador de Produção (Local)</option>
+                                        <option value="admin">Administrador Geral (Total)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label class="text-[10px] uppercase">Lojas Autorizadas:</label>
+                                    <div id="userFormStoresOptions" class="checkbox-group-stores text-[10px] max-h-24 overflow-y-auto border border-accent/20 p-2 rounded">
+                                        <!-- Store selections -->
+                                    </div>
+                                </div>
+                                <button type="submit" class="primary-button text-xs w-full">Gravar Utilizador</button>
+                            </form>
+                            <div id="usersList" class="compact-list text-xs mt-2 font-mono max-h-32 overflow-y-auto border border-accent/10 p-1 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- DYNAMIC OVERLAY PROMOTION MODAL -->
+    <div id="promotionModal" class="login-overlay" hidden>
+        <div class="login-card" style="max-width: 450px;">
+            <h3 id="promoModalTitle" class="m-0 mb-3 text-base font-bold text-ink">Criar Nova Campanha</h3>
+            <form id="promotionForm">
+                <input type="hidden" id="promoId" />
+                <div class="form-group mb-3">
+                    <label for="promoTitle">Título Comercial:</label>
+                    <input type="text" id="promoTitle" class="form-control" placeholder="Ex: Super Desconto no Garrafão" required />
+                </div>
+                <div class="form-group mb-3">
+                    <label for="promoDescription">Descrição:</label>
+                    <textarea id="promoDescription" class="form-control" rows="2" placeholder="Ex: Desconto de 15% na compra de 2 ou mais garrafões" required></textarea>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="promoDiscount">Percentagem Desconto (%):</label>
+                    <input type="number" id="promoDiscount" class="form-control" value="0" min="0" max="100" />
+                </div>
+                <div class="form-group mb-3 flex items-center gap-2">
+                    <input type="checkbox" id="promoActive" checked />
+                    <label for="promoActive">Campanha Activa</label>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="primary-button w-1/2">Guardar Campanha</button>
+                    <button type="button" class="ghost-button w-1/2" onclick="document.getElementById('promotionModal').setAttribute('hidden', '')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main javascript module loader -->
+    <script type="module" src="/app.js"></script>
+</body>
+</html>
